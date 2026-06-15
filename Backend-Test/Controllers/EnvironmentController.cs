@@ -1,37 +1,27 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+﻿using Backend_Test.Configuration;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Backend_Test.Controllers
 {
-    [Route("environment")]
     [ApiController]
-    public class EnvironmentController : ControllerBase
+    [Route("[controller]")]
+    public class EnvironmentController(
+        IWebHostEnvironment environment,
+        IOptions<ApiInfoOptions> apiInfo) : ControllerBase
     {
         [HttpGet("isproduction")]
-        public ActionResult<bool> GetIsProduction()
-        {
-            if (Debugger.IsAttached)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
+        public ActionResult<bool> GetIsProduction() =>
+            Ok(environment.IsProduction());
 
         [HttpGet("apiversion")]
-        public ActionResult<string> GetApiVersion()
-        {
-            // TODO: Change version when adding or updating core functionality
-            return "Api Version is 2.3";
-        }
+        public ActionResult<string> GetApiVersion() =>
+            Ok(apiInfo.Value.ApiVersion);
 
         [HttpGet("uiversion")]
-        public ActionResult<string> GetUIVersion()
-        {
-            // TODO: Change version when adding or updating core functionality in the web interface
-            return "UI Version is 4.7";
-        }
+        public ActionResult<string> GetUIVersion() =>
+            Ok(apiInfo.Value.UiVersion);
     }
 }

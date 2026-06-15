@@ -1,76 +1,40 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.VisualBasic;
-using PersonApi.Models;
+﻿using Backend_Test.Dtos;
+using Backend_Test.Services;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Backend_Test.Controllers
 {
     [ApiController]
-    [Route("persons")]
-    public class PersonController : ControllerBase
+    [Route("[controller]")]
+    public class PersonsController(IPersonService personService) : ApiControllerBase
     {
-        static Data data = new();
-        HelperUtils helper = new HelperUtils(data);
-        CommonExceptions exceptions = new CommonExceptions();
+        [HttpGet]
+        public ActionResult<IReadOnlyCollection<PersonResponse>> GetAll() =>
+            Ok(personService.GetAll());
 
-        [HttpGet("persons/getAll/")]
-        public ActionResult<IEnumerable<ObjPerson>> GetAll()
+        [HttpGet("{id}")]
+        public ActionResult<PersonResponse> GetById(int id) =>
+            FromResult(personService.GetById(id));
+
+        [HttpPost]
+        public ActionResult<PersonResponse> Add(PersonRequest request)
         {
-            return data.persons;
+            var result = personService.Add(request);
+            if (!result.IsSuccess)
+            {
+                return FromResult(result);
+            }
+
+            return CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value);
         }
 
-        [HttpGet("persons/get/{id}")]
-        public ActionResult<ObjPerson> GetById(int id)
-        {
-            if(!helper.PersonExists(id))
-            {
-                exceptions.ItemNotExists();
-                // Exception has no return
-                return null;
-            }
-            else
-            {
-                return data.persons.First(s => s.Id == id);
-            }
-        }
+        [HttpPut("{id}")]
+        public ActionResult<PersonResponse> Update(int id, PersonRequest request) =>
+            FromResult(personService.Update(id, request));
 
-        [HttpPost("persons/add/")]
-        public ActionResult Add(ObjPerson person)
-        {
-            data.persons.Add(person);
-            return Accepted(data.persons);
-        }
-
-        [HttpPost("persons/update/{id}")]
-        public ActionResult Update(int id, ObjPerson person)
-        {
-            if (id != person.Id)
-            {
-                exceptions.IdDoesNotMatch();
-            }
-            if (person.YearOfBirth > DateAndTime.Now.Year)
-            {
-                throw new System.Exception("Customer can not be born after current year");
-            }
-
-            data.persons[id] = new ObjPerson(person.Id, person.Firstname, person.Lastname, person.YearOfBirth);
-
-            return Accepted(data.persons);
-        }
-
-        [HttpDelete("persons/delete/{id}")]
-        public ActionResult Delete(int id)
-        {
-            if (helper.PersonExists(id))
-            {
-                data.persons.Remove(data.persons.First(s => s.Id == id));
-            }
-            else
-            {
-                exceptions.ItemNotExists();
-            }
-            return Accepted(data.persons);
-        }
+        [HttpDelete("{id}")]
+        public ActionResult Delete(int id) =>
+            FromResult(personService.Delete(id));
     }
 }

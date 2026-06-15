@@ -1,77 +1,58 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using PersonApi.Models;
-using System;
+﻿using Backend_Test.Common;
+using Backend_Test.Dtos;
+using Backend_Test.Services;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Backend_Test.Controllers
 {
-    [Route("purchases")]
     [ApiController]
-    public class PurchasesController : ControllerBase
+    [Route("[controller]")]
+    public class PurchasesController(IPurchaseService purchaseService) : ApiControllerBase
     {
-        static Data data = new();
-        HelperUtils helper = new HelperUtils(data);
-        CommonExceptions exceptions = new CommonExceptions();
+        [HttpGet]
+        public ActionResult<IReadOnlyCollection<PurchaseResponse>> GetAll() =>
+            Ok(purchaseService.GetAll());
 
-        [HttpGet("purchases/getAll/")]
-        public ActionResult<IEnumerable<ObjPurchase>> GetAll()
-        {
-            return data.purchases;
-        }
+        [HttpGet("{id}")]
+        public ActionResult<PurchaseResponse> GetById(int id) =>
+            FromResult(purchaseService.GetById(id));
 
-        [HttpGet("purchases/get/{id}")]
-        public ActionResult<ObjPurchase> GetByCustomerId(int id)
+        [HttpGet("customer/{customerId}")]
+        public ActionResult<IReadOnlyCollection<PurchaseResponse>> GetByCustomerId(int customerId) =>
+            FromResult(purchaseService.GetByCustomerId(customerId));
+
+        [HttpGet("customer/{customerId}/report")]
+        public ActionResult GetPurchaseReportById(int customerId)
         {
-            if (data.purchases.First(s => s.CustomerId == id) == null)
+            var result = purchaseService.GetReport(customerId);
+
+            return result.Status switch
             {
-                exceptions.ItemNotExists();
-                // Exception doesn't return
-                return null;
-            }
-            else
+                ResultStatus.Success => File(result.Value!.Content, "text/csv", result.Value.FileName),
+                ResultStatus.NotFound => NotFound(result.Error),
+                _ => BadRequest(result.Error)
+            };
+        }
+
+        [HttpPost]
+        public ActionResult<PurchaseResponse> Add(PurchaseRequest request)
+        {
+            var result = purchaseService.Add(request);
+            if (!result.IsSuccess)
             {
-                return data.purchases.First(s => s.CustomerId == id);
+                return FromResult(result);
             }
+
+            return CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value);
         }
 
-        /// <summary>
-        /// Generates a CSV report of a purchase, including a list of purchased items, their prices, the total expenditure, and customer information.
-        /// </summary>
-        /// <param name="id">The id of the Purchase order</param>
-        [HttpGet("purchases/get/{id}/report")]
-        public async Task<ActionResult<byte[]>> GetPurchaseReportById(int id)
-        {
-            throw new NotImplementedException("Please implement me!");
-        }
+        [HttpDelete("{id}")]
+        public ActionResult Delete(int id) =>
+            FromResult(purchaseService.Delete(id));
 
-        [HttpPost("purchases/add/")]
-        public ActionResult Add(ObjPurchase purchase)
-        {
-            data.purchases.Add(purchase);
-            return Accepted(data.products);
-        }
-
-        [HttpDelete("purchases/delete/{id}")]
-        public ActionResult Delete(int id)
-        {
-            data.purchases.Remove(data.purchases.First(s => s.Id == id));
-            return Accepted(data.purchases);
-        }
-
-        [HttpDelete("purchases/delete/{customerId}")]
-        public ActionResult DeleteFromCustomer(int id)
-        {
-            if (helper.PurchaseExists(id))
-            {
-                data.purchases.Remove(data.purchases.First(s => s.CustomerId == id));
-            }
-            else
-            {
-                exceptions.ItemNotExists();
-            }
-            return Accepted(data.purchases);
-        }
+        [HttpDelete("customer/{customerId}")]
+        public ActionResult DeleteFromCustomer(int customerId) =>
+            FromResult(purchaseService.DeleteFromCustomer(customerId));
     }
 }

@@ -1,71 +1,40 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using PersonApi.Models;
+﻿using Backend_Test.Dtos;
+using Backend_Test.Services;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Backend_Test.Controllers
 {
     [ApiController]
-    [Route("products")]
-    public class ProductsController : ControllerBase
+    [Route("[controller]")]
+    public class ProductsController(IProductService productService) : ApiControllerBase
     {
-        static Data data = new();
-        HelperUtils helper = new HelperUtils(data);
-        CommonExceptions exceptions = new CommonExceptions();
+        [HttpGet]
+        public ActionResult<IReadOnlyCollection<ProductResponse>> GetAll() =>
+            Ok(productService.GetAll());
 
-        [HttpGet("products/getAll/")]
-        public ActionResult<IEnumerable<ObjProduct>> GetAll()
-        {
-            return data.products;
-        }
+        [HttpGet("{id}")]
+        public ActionResult<ProductResponse> GetById(int id) =>
+            FromResult(productService.GetById(id));
 
-        [HttpGet("products/get/{id}")]
-        public ActionResult<ObjProduct> GetById(int id)
+        [HttpPost]
+        public ActionResult<ProductResponse> Add(ProductRequest request)
         {
-            if (!helper.ProductExists(id))
+            var result = productService.Add(request);
+            if (!result.IsSuccess)
             {
-                exceptions.ItemNotExists();
-                // Exception has no return
-                return null;
-            }
-            else
-            {
-                return data.products.First(s => s.Id == id);
-            }
-        }
-
-        [HttpPost("products/add/")]
-        public ActionResult Add(ObjProduct product)
-        {
-            data.products.Add(product);
-            return Accepted(data.products);
-        }
-
-        [HttpPost("products/update/{id}")]
-        public ActionResult Update(int id, ObjProduct product)
-        {
-            if (id != product.Id)
-            {
-                exceptions.IdDoesNotMatch();
+                return FromResult(result);
             }
 
-            data.products[id] = new ObjProduct(product.Id, product.Name, product.Type);
-
-            return Accepted(data.products);
+            return CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value);
         }
 
-        [HttpDelete("products/delete/{id}")]
-        public ActionResult Delete(int id)
-        {
-            if (helper.ProductExists(id))
-            {
-                data.products.Remove(data.products.First(s => s.Id == id));
-            }
-            else
-            {
-                exceptions.ItemNotExists();
-            }
-            return Accepted(data.products);
-        }
+        [HttpPut("{id}")]
+        public ActionResult<ProductResponse> Update(int id, ProductRequest request) =>
+            FromResult(productService.Update(id, request));
+
+        [HttpDelete("{id}")]
+        public ActionResult Delete(int id) =>
+            FromResult(productService.Delete(id));
     }
 }

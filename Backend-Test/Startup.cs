@@ -1,9 +1,12 @@
+using Backend_Test.Configuration;
+using Backend_Test.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
+using System;
 
 namespace Backend_Test
 {
@@ -14,8 +17,15 @@ namespace Backend_Test
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllers();
+
+            services.Configure<ApiInfoOptions>(Configuration.GetSection(ApiInfoOptions.SectionName));
+
+			services.AddSingleton(TimeProvider.System);
+            services.AddScoped<IPersonService, PersonService>();
+            services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IPurchaseService, PurchaseService>();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Backend_Test", Version = "v1" });
