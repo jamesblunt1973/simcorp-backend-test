@@ -3,28 +3,44 @@
 The code has been intentionally written in a messy and suboptimal way to serve as a "test exercise."
 This solution is purely for practice and can be modified in any way you see fit. During a potential interview, we will discuss the changes you made and the reasoning behind them.
 
-# Expectations
+# What I have changed
 
-Here’s what we’d like you to work on:
+## Here’s what I changed:
 
-1. Refactor the code
-Identify and fix any issues you notice to demonstrate how you would design and structure the solution.
-2. Add a missing endpoint
-Implement the "Get Report" endpoint (refer to GetPurchaseReportById in PurchasesController). We expect the output to follow a format similar to the example below:
+* Fix obvious bugs like:
 
-```csv
-      CustomerName:;John Doe
-      ProductId;Count;ProductName;Price
-      1;1;Pipe Wrench;19,99
-      3;2;Garden Hose;4,99
-      4;1;Toilet Plunger;1,49
-``` 
+  1. doubled routes
+  2. Update used id as a list index
+  3. Duplicated code
+  4. using First to check for null
+  5. dead code block
+  6. VisualBasic DateTime!
+* Use the correct verb \& fix the naming for routes and actions according to REST.
+* Implement Result pattern and return proper result status from actions.
+* Controllers don't share a single data store, I provided a single data source.
+* Add services and move any business logic out of controllers.
+* Remove exceptions, There isn't any unexpected behavior.
+* Use TimeProvider built-in service for getting date and time.
+* Use logger to record useful information and errors in structured logs.
+* Use Option pattern for strongly typed configuration.
+* Use request/response DTOs and validation.
+* Use proper data types. int for Id, decimal for Price \& ...
 
-There is no strict time limit for reworking the solution. If you believe certain improvements are worth making but would take too much time, feel free to provide a brief description of what you’d like to do and why, if given more time.
 
-# Evaluation
 
-The result of this exercise will serve as a starting point for the technical interview.
-During the interview, you will be asked to explain and demo your solution, and we will review it together.
-This home test and the interview are components of the overall evaluation process. We will consider your experience and other relevant factors throughout.
+# Further improvements
+
+With the current in memory data store, there isn't much we can improve on this project. How ever, I liked to write at least one test for the report generator, but since these days I almost always strictly use AI to generate unit tests, it wouldn't show any of my experience.
+
+
+
+If we decided to add additional features like persist the data in a file/database or integrate with an external API, we can implement Repository pattern or add EntityFramework or Outbox Pattern with a background process.
+
+
+
+I intentionally didn't use Async methods \& CancellationToken because right now, everything is synchronous and it adds unwanted complexity.
+
+
+
+
 
