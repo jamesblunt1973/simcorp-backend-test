@@ -3,10 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Backend_Test.Controllers
 {
-    /// <summary>
-    /// Maps a <see cref="Result"/> to the matching HTTP status code so the
-    /// translation lives in one place instead of being duplicated per action.
-    /// </summary>
     public abstract class ApiControllerBase : ControllerBase
     {
         protected ActionResult<T> FromResult<T>(Result<T> result) => result.Status switch
